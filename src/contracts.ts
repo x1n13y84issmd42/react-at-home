@@ -1,0 +1,35 @@
+import { Context } from "./context";
+
+export type AttrMapFn = (n: string, v: string) => any;
+
+export type Nodes = Iterable<Node> & {length: number};
+
+export interface I$ {
+	replace(oldE: Node, newEs: Nodes): void;
+    clone(e: Node, attrMap?: AttrMapFn): Node;
+	append(e: Node, children: Nodes, fn?: NodeMultiplexer): Promise<void>;
+	map(nodes: Nodes, fn: NodeMultiplexer, filter?: NodeFilter): Promise<Nodes>;
+}
+
+export type StateFn<TS extends object = {}> = (state: TS)=>Partial<TS>;
+export type DOMFn = (ctx: Context, $: I$, rah: IRAH)=>Promise<Nodes>;
+
+export interface ResolvedComponent<TS extends object = {}> {
+	src: Element;
+	stateFn?: StateFn<TS>;
+	domFn?: DOMFn;
+}
+
+export type NodeMultiplexer = (n: Node) => Promise<Nodes>;
+export type NodeFilter = (n: Node) => boolean;
+
+export interface IRAH {
+	transform(instE: Node, ctx: Context): Promise<Nodes>;
+	filter(vinst: Node): boolean;
+}
+
+export interface RAHElement extends Element {
+	rah?: {
+		ctx?: Context;
+	};
+}

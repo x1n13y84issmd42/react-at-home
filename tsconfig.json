@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		"module": "system",
+		"target": "ESNext",
+		"lib": [
+			"DOM",
+			"DOM.Iterable",
+			"DOM.AsyncIterable",
+			"ESNext",
+		],
+
+		"outFile": "../assets/xui2/index.js",
+		"baseUrl": "./src",
+
+		"noImplicitAny": true,
+		"strictBindCallApply": true,
+		"strictFunctionTypes": false,
+		"experimentalDecorators": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		
+		"removeComments": true,
+		"emitDecoratorMetadata": true,
+		"declaration": true,
+		"sourceMap": false,
+
+		"incremental": true,
+		"skipLibCheck": true,
+	}
+}
