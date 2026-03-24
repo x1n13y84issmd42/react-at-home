@@ -1,6 +1,9 @@
 # react-at-home
 
- - Mom, can we have React?
+```
+ - Mom, can we get React?
  - We have React at home.
-
 React at home:
+```
+
+You don't need this, really.
