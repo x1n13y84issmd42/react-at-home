@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"module": "system",
+		"module": "esnext",
 		"target": "ESNext",
 		"lib": [
 			"DOM",
@@ -9,8 +9,8 @@
 			"ESNext",
 		],
 
-		"outFile": "../assets/xui2/index.js",
-		"baseUrl": "./src",
+		"rootDir": ".",
+		"outDir": "lib",
 
 		"noImplicitAny": true,
 		"strictBindCallApply": true,

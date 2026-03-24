@@ -12,7 +12,7 @@ export interface I$ {
 }
 
 export type StateFn<TS extends object = {}> = (state: TS)=>Partial<TS>;
-export type DOMFn = (ctx: Context, $: I$, rah: IRAH)=>Promise<Nodes>;
+export type DOMFn = (ctx: Context, $: I$, rah: IRAH)=>Promise<Nodes | undefined>;
 
 export interface ResolvedComponent<TS extends object = {}> {
 	src: Element;

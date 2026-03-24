@@ -27,8 +27,8 @@ export namespace LogGroup {
 		type Opened = ReturnType<typeof _open>;
 
 		if (isAsync(fn)) {
-			return async function(...args: any[]) {
-				let opened: Opened;
+			return async function(this: any, ...args: any[]) {
+				let opened!: Opened;
 				try {
 					opened = _open(this, args, '*');
 					return await fn.apply(this, args);
@@ -39,8 +39,8 @@ export namespace LogGroup {
 				}
 			} as unknown as T;
 		} else {
-			return function(...args: any[]) {
-				let opened: Opened;
+			return function(this: any, ...args: any[]) {
+				let opened!: Opened;
 				try {
 					opened =_open(this, args);
 					return fn.apply(this, args);
@@ -81,7 +81,7 @@ export namespace LogGroup {
 			console.groupEnd();
 		}
 
-		function _catch(err: Error) {
+		function _catch(err: unknown) {
 			console.error(groupName);
 			console.error(err);
 			throw err;

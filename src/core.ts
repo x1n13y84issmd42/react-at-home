@@ -27,7 +27,7 @@ export class RAH implements IRAH {
         };
     }
 
-    resolve(compName: string): ResolvedComponent {
+    resolve(compName: string): ResolvedComponent | undefined {
         compName = compName.toLowerCase();
 
         const rc: ResolvedComponent = {
@@ -43,7 +43,11 @@ export class RAH implements IRAH {
     }
 
     @LogGroup('Engine.instantiate', n => lognode(n))
-    async instantiate(vinst: Element, parentCtx: Context, instCtx?: Context): Promise<Nodes> {        
+    async instantiate(vinst: Element, parentCtx?: Context, instCtx?: Context): Promise<Nodes> {        
+        if (! parentCtx) {
+            throw new Error(`Missing parent Context.`);
+        }
+
         if (! instCtx) {
             instCtx = parentCtx.child(vinst);
             instCtx.reset();
@@ -149,7 +153,7 @@ export class RAH implements IRAH {
 
             //TODO: need a better way to manage/configure/handle different types of nodes.
             if (inst.nodeType === Node.TEXT_NODE) {
-                inst.nodeValue = computer(inst.nodeValue, ctx);
+                inst.nodeValue = computer(inst.nodeValue || '', ctx);
             } else if (vinst.childNodes.length) {
                 await this.$.append(
                     inst,
@@ -167,7 +171,7 @@ export class RAH implements IRAH {
     // @LogGroup('Engine.filter')
     filter(vinst: Node): boolean {
         // Not allowing empty space nodes (those are usually code formatting).
-        if (vinst.nodeType === Node.TEXT_NODE && vinst.nodeValue.trim().length === 0) {
+        if (vinst.nodeType === Node.TEXT_NODE && (vinst.nodeValue || '').trim().length === 0) {
             return false;
         }
 
@@ -202,7 +206,7 @@ export class RAH implements IRAH {
         try {
             ctx.reset();
 
-            if (this.$.isHTMLTag(ctx.dom.vinst)) {
+            if (ctx.dom.vinst && this.$.isHTMLTag(ctx.dom.vinst)) {
                 ctx.dom.inst = await this.clone(ctx.dom.vinst, ctx);
                 return [ctx.dom.inst];
             }
@@ -240,6 +244,10 @@ export class RAH implements IRAH {
 
     @LogGroup('Engine.render', n => lognode(n), {rich: true})
     async render(vinst: Element, ctx?:Context<Record<string, any>>) {
+        if (! vinst) {
+            throw new Error(`No element virtual instance was specified. Aborting.`);
+        }
+
         let updating = false;
 
         ctx = ctx ? ctx.child(vinst, ctx.state, ctx.scope) : new Context();
@@ -252,41 +260,41 @@ export class RAH implements IRAH {
             console.log(`Queue ${bcs.size} ctxs, now having ${this.queue.size}`);
         });
 
-        document.getElementById('update').onclick = () => {
-            // ctx.state.n *= 5;
-            // ctx.state.ns.push(Math.round(Math.random() * 100));
-            // ctx.state.ns = ctx.state.ns;
-            // ctx.state.ns = ctx.state.ns;
-            update();
-        };
+        // document.getElementById('update').onclick = () => {
+        //     // ctx.state.n *= 5;
+        //     // ctx.state.ns.push(Math.round(Math.random() * 100));
+        //     // ctx.state.ns = ctx.state.ns;
+        //     // ctx.state.ns = ctx.state.ns;
+        //     update();
+        // };
 
         //TODO: move to update manager
-        const update_old = async () => {
-            const rafr = () => requestAnimationFrame(update);
-            if (this.queue.size < 1) return rafr();
+        // const update_old = async () => {
+        //     const rafr = () => requestAnimationFrame(update);
+        //     if (this.queue.size < 1) return rafr();
 
-            if (updating) return rafr();
-            updating = true;
+        //     if (updating) return rafr();
+        //     updating = true;
             
-            const t0 = Date.now();
-            try {
-                const q = [...this.queue];
-                this.queue.clear();
-                console.log(`** updating ${q.length} contexts...`);
-                for (let c of q) {
-                    await this.update(c);
-                }
-                console.log(`** done updating contexts...`);
-                console_log(`** took ${Date.now()-t0} ms.`);
-            } catch(err) {
-                console.error('** update error', err);
-            } finally {
-                updating = false;
-                rafr();
-                console.log('** update fin');
-            }
+        //     const t0 = Date.now();
+        //     try {
+        //         const q = [...this.queue];
+        //         this.queue.clear();
+        //         console.log(`** updating ${q.length} contexts...`);
+        //         for (let c of q) {
+        //             await this.update(c);
+        //         }
+        //         console.log(`** done updating contexts...`);
+        //         console_log(`** took ${Date.now()-t0} ms.`);
+        //     } catch(err) {
+        //         console.error('** update error', err);
+        //     } finally {
+        //         updating = false;
+        //         rafr();
+        //         console.log('** update fin');
+        //     }
             
-        };
+        // };
 
         const update = async () => {
             const rafr = () => requestAnimationFrame(update);

@@ -6,7 +6,7 @@ export interface State {
 };
 
 export interface Scope {
-	i: string;
+	i?: string;
 	item: unknown;
 };
 
@@ -17,6 +17,10 @@ export function stateFn(state: State) {
 }
 
 export async function domFn(ctx: Context<State, Scope>, $: I$, rah: IRAH) {
+	if (! ctx.dom.vinst) {
+		return;
+	}
+
 	const items = ctx.state.of;
 
 	const res: Node[] = [];

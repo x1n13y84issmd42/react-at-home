@@ -1,4 +1,4 @@
-export function lognode(n: Node) {
+export function lognode(n?: Node) {
 	if (! n) {
 		return '<undefined>';
 	}
@@ -9,7 +9,7 @@ export function lognode(n: Node) {
 
 	const e = n as Element;
 
-	function p(p: string, v: string) {
+	function p(p: string, v?: string | null) {
 		return v ? `${p}${v}`: undefined;
 	}
 
@@ -50,7 +50,7 @@ export function genid() {
 	return 'g' + genidvalue++;
 }
 
-export function makeid(pieces: string[]) {
+export function makeid(pieces: (string|undefined)[]) {
 	return pieces.filter(p=>!!p).join('-');
 }
 

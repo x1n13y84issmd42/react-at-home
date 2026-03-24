@@ -12,7 +12,7 @@ export function stateFn(state: State) {
 }
 
 export async function domFn(ctx: Context<State>, $: I$, rah: IRAH) {
-	if (ctx.state.cond) {
+	if (ctx.state.cond && ctx.dom.vinst) {
 		return await $.map(ctx.dom.vinst.childNodes, async n => await rah.transform(n, ctx));
 	}
 }

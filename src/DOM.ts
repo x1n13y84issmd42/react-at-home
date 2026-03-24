@@ -32,6 +32,11 @@ export class DOM implements I$ {
 
     @LogGroup('$.replace', (o, n) => `-${lognode(o)} +${n.length}`)
 	replace(oldE: Node, newEs: Nodes) {
+		if (! oldE.parentNode) {
+			console.error(`The element replaced has no parentNode.`);
+			return;
+		}
+
 		for (let newE of newEs) {
 			console.log(lognode(newE));
 			oldE.parentNode.insertBefore(newE, oldE);
@@ -42,13 +47,19 @@ export class DOM implements I$ {
 
     @LogGroup('$.replace2', (o, n) => `-${o?.length} +${n?.length}`)
 	replace2(oldEs: Nodes, newEs: Nodes) {
+		
 		if (!oldEs || !newEs) {
 			return;
 		}
-
+		
 		let inserted = false;
-
+		
 		for (let oldE of oldEs) {
+			if (! oldE.parentNode) {
+				console.error(`The element replaced has no parentNode.`);
+				continue;
+			}
+
 			if (! inserted) {
 				for (let newE of newEs) {
 					console.log('+', lognode(newE));
@@ -112,7 +123,7 @@ export class DOM implements I$ {
 		if (fn) {
 			console.log(`multi`);
 			const multichildren = await imap(children, fn, filter);
-			await Promise.all(await imap(multichildren, mc => mc?.length ? this.append(e, mc) : void 0));
+			await Promise.all(await imap(multichildren, async (mc) => mc?.length ? this.append(e, mc) : void 0));
 		} else {
 			for (let c of children) {
 				console.log(lognode(c));

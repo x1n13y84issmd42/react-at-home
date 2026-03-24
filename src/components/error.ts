@@ -16,7 +16,9 @@ export async function domFn(ctx: Context<State>, $: I$, rah: IRAH) {
 		const stack = document.createElement('small');
 		stack.style.whiteSpace = 'pre-wrap';
 		stack.style.display = 'block';
-		stack.appendChild(document.createTextNode(ctx.state.error.stack));
+		if (ctx.state.error.stack) {
+			stack.appendChild(document.createTextNode(ctx.state.error.stack));
+		}
 		E.appendChild(stack);
 
 		return [E];

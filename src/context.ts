@@ -99,7 +99,7 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 
 	parent?: Context;
 
-	protected _id: string;
+	protected _id!: string;
 	// Version
 	protected v = 0;
 	// Version rendered
@@ -146,8 +146,10 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 	}
 
 	@LogGroup("Context.merge()", logCtx, {collapsed: true})
-	private merge<T extends object>(store: T, ...extras: T[]) {
+	private merge<T extends object>(store: T, ...extras: (T|undefined)[]) {
 		for (let e of extras) {
+			if (!e) continue;
+
 			for (let ek in e) {
 				LogGroup.wrap(() => {
 					store[ek] = e[ek];
