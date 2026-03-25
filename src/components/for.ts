@@ -10,7 +10,7 @@ export interface Scope {
 	item: unknown;
 };
 
-export function stateFn(state: State) {
+export async function stateFn(state: State) {
 	return {
 		of: state.of || [],
 	};

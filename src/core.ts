@@ -100,7 +100,7 @@ export class RAH implements IRAH {
 
             if (comp.stateFn) {
                 const stateFn = LogGroup.wrap(comp.stateFn, 'stateFn()', undefined, {collapsed: true});
-                ctx.mergeState(stateFn(ctx.state));
+                ctx.mergeState(await stateFn(ctx.state));
             }
 
             if (comp.src) {

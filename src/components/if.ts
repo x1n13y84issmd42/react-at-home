@@ -5,7 +5,7 @@ export interface State {
 	cond: boolean;
 }
 
-export function stateFn(state: State) {
+export async function stateFn(state: State) {
 	return {
 		cond: !!state.cond
 	};

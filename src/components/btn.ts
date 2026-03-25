@@ -5,7 +5,7 @@ export interface State {
 	value: string;
 }
 
-export function stateFn(state: State) {
+export async function stateFn(state: State) {
 	return {
 		value: state.value || ''
 	};

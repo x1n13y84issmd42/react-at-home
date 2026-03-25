@@ -11,7 +11,7 @@ export interface I$ {
 	map(nodes: Nodes, fn: NodeMultiplexer, filter?: NodeFilter): Promise<Nodes>;
 }
 
-export type StateFn<TS extends object = {}> = (state: TS)=>Partial<TS>;
+export type StateFn<TS extends object = {}> = (state: TS)=>Promise<Partial<TS>>;
 export type DOMFn = (ctx: Context, $: I$, rah: IRAH)=>Promise<Nodes | undefined>;
 
 export interface ResolvedComponent<TS extends object = {}> {
