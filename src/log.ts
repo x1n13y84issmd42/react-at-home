@@ -60,7 +60,7 @@ export namespace LogGroup {
 			}
 
 			if (options?.collapsed)
-				console.group(groupName + ' ' + postfix, ...extraLogData);
+				console.groupCollapsed(groupName + ' ' + postfix, ...extraLogData);
 			else
 				console.group(groupName + ' ' + postfix, ...extraLogData);
 			

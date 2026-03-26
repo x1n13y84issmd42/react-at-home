@@ -117,6 +117,12 @@ export class RAH implements IRAH {
                 const domFn = LogGroup.wrap(comp.domFn, 'domFn()');
                 ctx.dom.nodes.push(...(await domFn(ctx, this.$, this)||[]));
                 console.log(`After domFn(): ${ctx.dom.nodes.length} child nodes`);
+
+                if (! ctx.dom.nodes.length) {
+                    // This serves as a placeholder for unrendered nodes (like <if cond=false>)
+                    // to allow replacement later when the node is rendered.
+                    ctx.dom.nodes = [this.$.createPlaceholder(ctx.id)];
+                }
             }
 
             return ctx.dom.nodes;

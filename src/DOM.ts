@@ -56,7 +56,7 @@ export class DOM implements I$ {
 		
 		for (let oldE of oldEs) {
 			if (! oldE.parentNode) {
-				console.error(`The element replaced has no parentNode.`);
+				console.error(`The element replaced (${oldE}) has no parentNode.`);
 				continue;
 			}
 
@@ -143,5 +143,11 @@ export class DOM implements I$ {
 		}
 
 		return res;
+	}
+
+	createPlaceholder(id: string) {
+		const e = document.createElement('template');
+		e.setAttribute('component', id);
+		return e;
 	}
 }
