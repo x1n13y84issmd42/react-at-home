@@ -1,5 +1,5 @@
 import { Context } from './context';
-import { DOMFn, IRAH, Nodes, ResolvedComponent, StateFn } from './contracts';
+import { DOMFn, IRAH, Nodes, OnRenderFn, ResolvedComponent, StateFn } from './contracts';
 import { computer } from './data';
 import * as datafn from './datafn';
 import { DOM } from './DOM';
@@ -9,6 +9,7 @@ import { lognode } from './utility';
 type RegisteredComponent = {
     stateFn?: StateFn;
     domFn?: DOMFn;
+    onRenderFn?: OnRenderFn;
 };
 
 export class RAH implements IRAH {
@@ -20,10 +21,11 @@ export class RAH implements IRAH {
 		///
 	}
 
-    register(compName: string, stateFn?: StateFn, domFn?: DOMFn) {
+    register(compName: string, stateFn?: StateFn, domFn?: DOMFn, onRenderFn?: OnRenderFn) {
         this.registry[compName.toLowerCase()] = {
             stateFn,
             domFn,
+            onRenderFn,
         };
     }
 
@@ -95,6 +97,7 @@ export class RAH implements IRAH {
     @LogGroup(`Engine.create`, n => `<${n}>`)
     async create(compName: string, ctx: Context): Promise<Nodes> {
         const comp = await this.resolve(compName);
+        let created = true;
         if (comp) {
             ctx.dom.nodes = [];
 
@@ -122,7 +125,12 @@ export class RAH implements IRAH {
                     // This serves as a placeholder for unrendered nodes (like <if cond=false>)
                     // to allow replacement later when the node is rendered.
                     ctx.dom.nodes = [this.$.createPlaceholder(ctx.id)];
+                    created = false;
                 }
+            }
+
+            if (created && comp.onRenderFn) {
+                comp.onRenderFn(ctx);
             }
 
             return ctx.dom.nodes;

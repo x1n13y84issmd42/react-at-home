@@ -13,11 +13,13 @@ export interface I$ {
 
 export type StateFn<TS extends object = {}> = (state: TS)=>Promise<Partial<TS>>;
 export type DOMFn = (ctx: Context, $: I$, rah: IRAH)=>Promise<Nodes | undefined>;
+export type OnRenderFn = (ctx: Context)=>Promise<void>;
 
 export interface ResolvedComponent<TS extends object = {}> {
 	src: Element;
 	stateFn?: StateFn<TS>;
 	domFn?: DOMFn;
+	onRenderFn?: OnRenderFn;
 }
 
 export type NodeMultiplexer = (n: Node) => Promise<Nodes>;
