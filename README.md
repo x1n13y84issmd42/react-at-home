@@ -15,3 +15,5 @@ Use `MutationObserver` to hook DOM insertions (and call component's OnRender()).
 Flexible policies for handling various types of nodes in `transform()`.
 
 More flexible policies for handling custom attributes in components and elements.
+
+Automatically compute inst.nodeValue if vinst has it.

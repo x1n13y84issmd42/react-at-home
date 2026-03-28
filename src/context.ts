@@ -84,6 +84,10 @@ interface IContextDOM {
 
 	// Other created nodes we might care about.
 	nodes: Node[];
+
+	id: {
+		[id: string]: Element;
+	};
 }
 
 function logCtx (this: Context) {
@@ -94,7 +98,7 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 	readonly state: State.WithHooks<Tstate> = State.create<Tstate>({} as any, this);
 	readonly scope: Tscope = {} as Tscope;
 
-	dom: IContextDOM = {nodes: []};
+	dom: IContextDOM = {nodes: [], id: {}};
 	rc?: ResolvedComponent;
 
 	parent?: Context;

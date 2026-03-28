@@ -15,11 +15,23 @@ type RegisteredComponent = {
 export class RAH implements IRAH {
     protected registry: Record<string, RegisteredComponent> = {};
 
+    // Here components' onRender() are stored during rendering
+    // and executed once all the elements are in the DOM. 
+    //TODO: needs refactor/redesign.
+    protected onRenderStash: Function[] = [];
+
 	constructor(
         private $ = new DOM(),
 	) {
 		///
 	}
+
+    onRender() {
+        console.log(`Having ${this.onRenderStash.length} onRender callbacks.`);
+        for (let fn of this.onRenderStash) {
+            fn();
+        }
+    }
 
     register(compName: string, stateFn?: StateFn, domFn?: DOMFn, onRenderFn?: OnRenderFn) {
         this.registry[compName.toLowerCase()] = {
@@ -130,7 +142,8 @@ export class RAH implements IRAH {
             }
 
             if (created && comp.onRenderFn) {
-                comp.onRenderFn(ctx);
+                //TODO: refactor this entire idea with onRender.
+                this.onRenderStash.push(() => comp.onRenderFn && comp.onRenderFn(ctx));
             }
 
             return ctx.dom.nodes;
@@ -168,13 +181,20 @@ export class RAH implements IRAH {
             //TODO: need a better way to manage/configure/handle different types of nodes.
             if (inst.nodeType === Node.TEXT_NODE) {
                 inst.nodeValue = computer(inst.nodeValue || '', ctx);
-            } else if (vinst.childNodes.length) {
-                await this.$.append(
-                    inst,
-                    vinst.childNodes,
-                    cn => this.transform(cn, ctx),
-                    this.filter
-                );
+            } else {
+                //TODO: this seems out of place.
+                const instID = inst.getAttribute('id');
+                if (instID) {
+                    ctx.dom.id[instID] = inst;
+                }
+                if (vinst.childNodes.length) {
+                    await this.$.append(
+                        inst,
+                        vinst.childNodes,
+                        cn => this.transform(cn, ctx),
+                        this.filter
+                    );
+                }
             }
     
             return inst;
@@ -209,7 +229,7 @@ export class RAH implements IRAH {
     
             return await this.instantiate(vinst as Element, ctx);
         } catch(err) {
-            return await this.create('error', new Context({error: err}));
+            return await this.create('error', new Context({error: err, nodeName: vinst.nodeName, ctxID: ctx.id}));
         }
     }
 
@@ -235,6 +255,10 @@ export class RAH implements IRAH {
 
     @LogGroup('Engine.update', c => c.name, {rich: true})
     async update(ctx: Context) {
+        // This update happens for components that've been removed from DOM
+        // but if their context is in queue.
+        //TODO: fix this.
+
         if (!ctx.needsRender) {
             console.log(`Already rendered.`);
             return;
@@ -243,6 +267,7 @@ export class RAH implements IRAH {
         if (ctx.dom.inst) {
             console.dir('"inst" case');
             // updateCtx() will modify ctx.dom
+            //TODO: find a way to avoid recreating already rendered elements.
             const inst = ctx.dom.inst;
             this.$.replace(inst, await this.updateCtx(ctx));
         } else {
@@ -258,6 +283,8 @@ export class RAH implements IRAH {
 
     @LogGroup('Engine.render', n => lognode(n), {rich: true})
     async render(vinst: Element, ctx?:Context<Record<string, any>>) {
+        this.onRenderStash = [];
+
         if (! vinst) {
             throw new Error(`No element virtual instance was specified. Aborting.`);
         }
@@ -274,43 +301,12 @@ export class RAH implements IRAH {
             console.log(`Queue ${bcs.size} ctxs, now having ${this.queue.size}`);
         });
 
-        // document.getElementById('update').onclick = () => {
-        //     // ctx.state.n *= 5;
-        //     // ctx.state.ns.push(Math.round(Math.random() * 100));
-        //     // ctx.state.ns = ctx.state.ns;
-        //     // ctx.state.ns = ctx.state.ns;
-        //     update();
-        // };
+        this.$.replace(vinst, await this.transform(vinst, ctx));
 
-        //TODO: move to update manager
-        // const update_old = async () => {
-        //     const rafr = () => requestAnimationFrame(update);
-        //     if (this.queue.size < 1) return rafr();
-
-        //     if (updating) return rafr();
-        //     updating = true;
-            
-        //     const t0 = Date.now();
-        //     try {
-        //         const q = [...this.queue];
-        //         this.queue.clear();
-        //         console.log(`** updating ${q.length} contexts...`);
-        //         for (let c of q) {
-        //             await this.update(c);
-        //         }
-        //         console.log(`** done updating contexts...`);
-        //         console_log(`** took ${Date.now()-t0} ms.`);
-        //     } catch(err) {
-        //         console.error('** update error', err);
-        //     } finally {
-        //         updating = false;
-        //         rafr();
-        //         console.log('** update fin');
-        //     }
-            
-        // };
-
+        this.onRender();
+        
         const update = async () => {
+            this.onRenderStash = [];
             const rafr = () => requestAnimationFrame(update);
 
             if (this.queue.size < 1) return rafr();
@@ -328,6 +324,7 @@ export class RAH implements IRAH {
                     for (let c of q) {
                         await this.update(c);
                     }
+                    this.onRender();
                     console.log(`Done updating contexts.`);
                     console_log(`Took ${Date.now()-t0} ms.`);
                 } catch(err) {
@@ -339,8 +336,6 @@ export class RAH implements IRAH {
                 }
             }, 'update')();
         };
-
-        this.$.replace(vinst, await this.transform(vinst, ctx));
 
         update();
     }

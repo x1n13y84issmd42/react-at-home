@@ -2,6 +2,8 @@ import { Context } from "../context";
 import { I$, IRAH } from "../contracts";
 
 export interface State {
+	nodeName: string;
+	ctxID: string;
 	error: Error;
 }
 
@@ -11,7 +13,15 @@ export async function domFn(ctx: Context<State>, $: I$, rah: IRAH) {
 		E.style.backgroundColor = 'red';
 		E.style.color = 'white';
 
-		E.appendChild(document.createTextNode(ctx.state.error.message));
+		const p1 = document.createElement('p');
+		const p2 = document.createElement('p');
+		const p3 = document.createElement('p');
+		p1.appendChild(document.createTextNode('Context: ' + ctx.state.ctxID + "\n"));
+		p2.appendChild(document.createTextNode('Node: ' + ctx.state.nodeName + "\n"));
+		p3.appendChild(document.createTextNode(ctx.state.error.message));
+		E.appendChild(p1);
+		E.appendChild(p2);
+		E.appendChild(p3);
 		
 		const stack = document.createElement('small');
 		stack.style.whiteSpace = 'pre-wrap';
