@@ -3,77 +3,13 @@ import { LogGroup } from "./log";
 import { State } from "./state";
 import { genid, IDGen, lognode, makeid } from "./utility";
 
-/* export class ContextStore<T extends Object = {}> {
-	protected data: T = {} as T;
-	
-	[p: string]: any;
-
-	reset(d: T) {
-		this.data = {...d};
-	}
-
-	merge(...d: (T|ContextStore<T>)[]) {
-		const d1 = {...this.data};
-		const d2 = {...d.reduce((p: T, c: T|ContextStore<T>) => {return {...p, ...c}}, {} as T)};
-		this.data = {...d1, ...d2};
-	}
-
-	set<K extends keyof T>(k: K, v: T[K]) {
-		this.data[k] = v;
-	}
-
-	get<K extends keyof T>(k: K): T[K] {
-		return this.data[k];
-	}
-
-	get value(): T {
-		return this.data;
-	}
-
-	static create<T extends Object = {}>(): TContextStore<T> {
-		//TODO: this proxy usage needs to be revised both design- & performance-wise.
-		function get(o: ContextStore<T>, p: string) {
-			// console.log(`ContextStore Proxy get`, p);
-
-			if (p in o) return o[p];
-
-			const pv = (o.value as any)[p];
-
-			if (pv instanceof StateClosure) {
-				return pv.value;
-			}
-
-			return pv;
-		}
-		
-		function set(o: ContextStore<T>, p: string, v: any) {
-			// console.log(`ContextStore Proxy set`, p);
-			if (p in o)
-				o[p] = v;
-			else {
-				const ovalue = o.value as any;
-				if (ovalue[p] instanceof StateClosure) {
-					ovalue[p].value = v;
-				} else {
-					ovalue[p] = v;
-				}
-			}
-
-			return true;
-		}
-
-		return new Proxy(new ContextStore<T>(), {get, set}) as TContextStore<T>;
-	}
-} */
-
-// export type TContextStore<T> = UnclosureState<T> & ContextStore<T>;
-
 interface IContextDOM {
 	// The virtual instance - i.e. the component 'reference' instance
 	// as created initially, i.e. <MyOmponent></MyOmponent>
 	vinst?: Element;
 
 	// The actual DOM instance, in fact a copy of the component source.
+	//TODO: get rid of this, refactor everything to use only multiple nodes.
 	inst?: Element;
 	
 	// The component source template DOM markup.

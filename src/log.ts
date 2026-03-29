@@ -1,12 +1,9 @@
 import { isAsync } from "./utility";
 
 export const console_log = console.log;
-// console.log = console.dir = () => {};
 
 export function LogGroup(groupName: string, extra?: LogGroup.ExtraFn, opts?: LogGroup.Options) {
 	return (target: any, prop: string, pd: PropertyDescriptor) => {
-		// console.dir({target, prop, pd});
-		// console.log(`LogGroup @ ${target.constructor.name}.${prop}()`);
 		pd.value = LogGroup.wrap(pd.value, groupName, extra, opts);
 		return pd;
 	};

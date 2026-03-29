@@ -31,7 +31,6 @@ export async function domFn(ctx: Context<State, Scope>, $: I$, rah: IRAH) {
 
 		res.push(...await $.map(
 			ctx.dom.vinst.childNodes,
-			// (cn: Element) => rah.transform(cn, ctx.copy({}, {i, item: items[i]}, true, cn.id, true)),
 			(cn: Element) => rah.transform(cn, ctx),
 			rah.filter
 		));

@@ -46,6 +46,7 @@ export class DOM implements I$ {
 		].includes(e.nodeName.toLowerCase());
 	}
 
+	//TODO: get rid of this "single node" workflow.
     @LogGroup('$.replace', (o, n) => `-${lognode(o)} +${n.length}`)
 	replace(oldE: Node, newEs: Nodes) {
 		if (! oldE.parentNode) {

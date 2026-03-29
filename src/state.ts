@@ -2,49 +2,6 @@ import { Context } from "./context";
 import { LogGroup } from "./log";
 import { isAsync, Keys } from "./utility";
 
-/**
- * Links a state property to a set of Contexts that depend on it
- * and provides a host to hook for get/set operations. 
- */
-/* export class StateClosure<T = unknown> {
-	protected bound = new Set<Context>();
-
-	constructor(protected v: T) {
-		///
-	}
-
-	get value(): T {
-		// StateClosure.hooks.get(this);
-		console.log(`StateClosure.get`, this.v);
-		return this.v;
-	}
-
-	set value(v: T) {
-		console.log(`StateClosure.set`, v);
-		this.v = v;
-		console.log(`Should update`, this.bound.size, `components.`);
-		console.dir(this.bound);
-		// StateClosure.hooks.set(this);
-	}
-
-	bindContext(ctx: Context) {
-		this.bound.add(ctx);
-	}
-
-	getBoundContexts() {
-		return this.bound;
-	}
-
-	static x_hooks = {
-		get: <T>(c: StateClosure<T>) => {},
-		set: <T>(c: StateClosure<T>) => {},
-	};
-} */
-
-// export type UnclosureStateProp<T> = T extends StateClosure<infer U> ? U : T extends object ? UnclosureState<T> : T;
-// export type UnclosureState<Tst> = {[p in keyof Tst]: UnclosureStateProp<Tst[p]>};
-
-
 export namespace State {
 	export type WithHooks<T> = T & {hooks: {get: State.Hook; set: State.Hook;}};
 
