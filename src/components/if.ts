@@ -1,5 +1,5 @@
 import { Context } from "../context";
-import { I$, IRAH } from "../contracts";
+import { I$, IEngine } from "../contracts";
 
 export interface State {
 	cond: boolean;
@@ -11,8 +11,8 @@ export async function stateFn(state: State) {
 	};
 }
 
-export async function domFn(ctx: Context<State>, $: I$, rah: IRAH) {
+export async function domFn(ctx: Context<State>, $: I$, engine: IEngine) {
 	if (ctx.state.cond && ctx.dom.vinst) {
-		return await $.map(ctx.dom.vinst.childNodes, async n => await rah.transform(n, ctx));
+		return await $.map(ctx.dom.vinst.childNodes, async n => await engine.transform(n, ctx));
 	}
 }

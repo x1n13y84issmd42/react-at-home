@@ -1,5 +1,5 @@
 import { Context } from './context';
-import { DOMFn, IRAH, Nodes, OnRenderFn, ResolvedComponent, StateFn } from './contracts';
+import { DOMFn, IEngine, Nodes, OnRenderFn, ResolvedComponent, StateFn } from './contracts';
 import { computer } from './data';
 import * as datafn from './datafn';
 import { DOM } from './DOM';
@@ -12,7 +12,7 @@ type RegisteredComponent = {
     onRenderFn?: OnRenderFn;
 };
 
-export class RAH implements IRAH {
+export class Engine implements IEngine {
     protected registry: Record<string, RegisteredComponent> = {};
 
     // Here components' onRender() are stored during rendering

@@ -1,5 +1,5 @@
 import { Context } from "../context";
-import { I$, IRAH, Nodes } from "../contracts";
+import { I$, IEngine, Nodes } from "../contracts";
 
 export interface State {
 	of: unknown[];
@@ -16,7 +16,7 @@ export async function stateFn(state: State) {
 	};
 }
 
-export async function domFn(ctx: Context<State, Scope>, $: I$, rah: IRAH) {
+export async function domFn(ctx: Context<State, Scope>, $: I$, engine: IEngine) {
 	if (! ctx.dom.vinst) {
 		return;
 	}
@@ -31,8 +31,8 @@ export async function domFn(ctx: Context<State, Scope>, $: I$, rah: IRAH) {
 
 		res.push(...await $.map(
 			ctx.dom.vinst.childNodes,
-			(cn: Element) => rah.transform(cn, ctx),
-			rah.filter
+			(cn: Element) => engine.transform(cn, ctx),
+			engine.filter
 		));
 
 		delete ctx.scope.i;

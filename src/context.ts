@@ -1,4 +1,4 @@
-import { ResolvedComponent, RAHElement } from "./contracts";
+import { ResolvedComponent, EngineElement } from "./contracts";
 import { LogGroup } from "./log";
 import { State } from "./state";
 import { genid, IDGen, lognode, makeid } from "./utility";
@@ -104,8 +104,8 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 
 	@LogGroup("Context.own()", logCtx)
 	own(vinst: Element, inst?: Element, id?: string) {
-		const xvinst = vinst as RAHElement;
-		xvinst.rah = xvinst.rah || {};
+		const xvinst = vinst as EngineElement;
+		xvinst._engine_ = xvinst._engine_ || {};
 
 		if (! this.dom.vinst) {
 			this._id = id || genid();
@@ -123,7 +123,7 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 	}
 
 	static owned(e: Element) {
-		const ctx = (e as RAHElement).rah?.ctx
+		const ctx = (e as EngineElement)._engine_?.ctx
 		if (ctx) console.log(`Restored owned ctx from vinst`, lognode(e));
 		return ctx;
 	}

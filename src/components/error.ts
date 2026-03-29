@@ -1,5 +1,5 @@
 import { Context } from "../context";
-import { I$, IRAH } from "../contracts";
+import { I$, IEngine } from "../contracts";
 
 export interface State {
 	nodeName: string;
@@ -7,7 +7,7 @@ export interface State {
 	error: Error;
 }
 
-export async function domFn(ctx: Context<State>, $: I$, rah: IRAH) {
+export async function domFn(ctx: Context<State>, $: I$, engine: IEngine) {
 	if (ctx.state.error) {
 		const E = document.createElement('div');
 		E.style.backgroundColor = 'red';

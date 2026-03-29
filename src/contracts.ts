@@ -12,7 +12,7 @@ export interface I$ {
 }
 
 export type StateFn<TS extends object = {}> = (state: TS)=>Promise<Partial<TS>>;
-export type DOMFn = (ctx: Context, $: I$, rah: IRAH)=>Promise<Nodes | undefined>;
+export type DOMFn = (ctx: Context, $: I$, engine: IEngine)=>Promise<Nodes | undefined>;
 export type OnRenderFn = (ctx: Context)=>Promise<void>;
 
 export interface ResolvedComponent<TS extends object = {}> {
@@ -25,13 +25,13 @@ export interface ResolvedComponent<TS extends object = {}> {
 export type NodeMultiplexer = (n: Node) => Promise<Nodes>;
 export type NodeFilter = (n: Node) => boolean;
 
-export interface IRAH {
+export interface IEngine {
 	transform(instE: Node, ctx: Context): Promise<Nodes>;
 	filter(vinst: Node): boolean;
 }
 
-export interface RAHElement extends Element {
-	rah?: {
+export interface EngineElement extends Element {
+	_engine_?: {
 		ctx?: Context;
 	};
 }
