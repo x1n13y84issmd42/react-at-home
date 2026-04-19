@@ -1,10 +1,13 @@
 import { Context } from './context';
-import { DOMFn, IEngine, Nodes, OnRenderFn, ResolvedComponent, StateFn } from './contracts';
+import { DOMFn, EngineElement, IEngine, Nodes, OnRenderFn, ResolvedComponent, StateFn } from './contracts';
 import { computer } from './data';
 import * as datafn from './datafn';
 import { DOM } from './DOM';
 import { console_log, LogGroup } from './log';
 import { lognode } from './utility';
+import { Handlers, handlers } from "./handlers";
+import { State } from './state';
+
 
 type RegisteredComponent = {
     stateFn?: StateFn;
@@ -75,47 +78,46 @@ export class Engine implements IEngine {
         instCtx.dom.nodes = [];
         const instState = {} as any;
 
-        instCtx.state.hooks.set.push((bcs: Set<Context>) => {
-            for (let bc of bcs) {
-                bc.onUpdate();
-                this.queue.add(bc);
-            }
-            console.log(`Queue ${bcs.size} ctxs, now having ${this.queue.size}`);
-        });
+        instCtx.state.hooks.set.push(this.onStateUpdate.bind(this));
 
-        parentCtx.state.hooks.get.with(this.bindContext(instCtx), () => {
+        const comp = this.resolve(vinst.nodeName);
+
+        instCtx.update = async () => {
             const attrFn = this.getAttrFn(parentCtx);
             for (let a of vinst.attributes) {
                 instState[a.name] = attrFn(a.name, a.value);
                 //TODO: handle special attributes such as x-if, x-as, x-root etc.
             }
+            instCtx.mergeState(instState);
+        };
+
+        parentCtx.state.hooks.get.forContext(instCtx, () => {
+            instCtx.update && instCtx.update();    
         });
 
-        instCtx.mergeState(instState);
 
-        const nodes = await this.create(vinst.nodeName, instCtx);
+        const nodes = await this.create(vinst.nodeName, instCtx, comp);
         console.log(`Rendered.`, instCtx.dom.nodes);
         instCtx.onRender();
         return nodes;
     }
 
-    bindContext(ctx: Context) {
-        return (bc: Set<Context>) => {
-            bc.add(ctx);
-            console.log(`Added ctx#${ctx.id}. bc.size=${bc.size}`);
-        };
-    }
-
     @LogGroup(`Engine.create`, n => `<${n}>`)
-    async create(compName: string, ctx: Context): Promise<Nodes> {
-        const comp = await this.resolve(compName);
+    async create(compName: string, ctx: Context, comp?: ResolvedComponent): Promise<Nodes> {
+        comp = comp || await this.resolve(compName);
         let created = true;
         if (comp) {
             ctx.dom.nodes = [];
 
             if (comp.stateFn) {
                 const stateFn = LogGroup.wrap(comp.stateFn, 'stateFn()', undefined, {collapsed: true});
-                ctx.mergeState(await stateFn(ctx.state));
+                await stateFn(ctx.state);
+
+                const prevUpdate = ctx.update || (async () => {});
+                ctx.update = async () => {
+                    prevUpdate();
+                    await stateFn(ctx.state);
+                };
             }
 
             if (comp.src) {
@@ -170,23 +172,24 @@ export class Engine implements IEngine {
         );
     }
 
-    @LogGroup(`Engine.clone`, n => lognode(n))
-    async clone(vinst: Node, ctx: Context): Promise<Element> {
-        ctx.own(vinst as Element);
+    @LogGroup(`Engine.clone_2`, n => lognode(n))
+    async clone(vinst: Node, ctx: Context): Promise<EngineElement> {
 
-        return await ctx.state.hooks.get.with(this.bindContext(ctx), async () => {
-            const inst = this.$.clone(vinst, this.getAttrFn(ctx));
-            ctx.own(vinst as Element, inst);
+        const inst = this.$.clone(vinst, this.getAttrFn(ctx)) as EngineElement;
+        inst._engine_ = {
+            ctx,
+            update: () => this.compute(inst, vinst as Element, ctx),
+        };
 
-            //TODO: need a better way to manage/configure/handle different types of nodes.
-            if (inst.nodeType === Node.TEXT_NODE) {
-                inst.nodeValue = computer(inst.nodeValue || '', ctx);
-            } else {
-                //TODO: this seems out of place.
+        return await ctx.state.hooks.get.forElement(inst, async () => {
+            inst._engine_.update();
+
+            if (inst.nodeType !== Node.TEXT_NODE) {
                 const instID = inst.getAttribute('id');
                 if (instID) {
                     ctx.dom.id[instID] = inst;
                 }
+    
                 if (vinst.childNodes.length) {
                     await this.$.append(
                         inst,
@@ -198,8 +201,47 @@ export class Engine implements IEngine {
             }
     
             return inst;
-
         });
+
+    }
+
+    @LogGroup(`Engine.compute`, (n, s) => lognode(s))
+    compute(inst: Element, src: Element, ctx: Context) {
+        if (inst.nodeType === Node.TEXT_NODE) {
+            inst.nodeValue = computer(src.nodeValue || '', ctx);
+        }
+
+        const attrMap = this.getAttrFn(ctx);
+
+        if (src.attributes) {
+            for (let a of src.attributes) {
+                const av = attrMap(a.name, a.value);
+
+                if (av === undefined) {
+                    console.log(`Skipping attribute "${a.name}" due to undefined value.`);
+                    continue;
+                }
+
+                if (av instanceof Function) {
+                    let match = a.name.match(/^on(.*)/i);
+                    if (match) {
+                        if (match[1] in handlers) {
+                            inst.addEventListener(match[1], handlers[match[1] as keyof Handlers](av));
+                        } else {
+                            console.warn(`Unknown event handler ${a.name}.`);
+                            inst.addEventListener(match[1], handlers.generic(av));
+                        }
+                        console.log(`+ "${match[1]}" event handler`);
+                        continue;
+                    } else {
+                        console.warn(`Unexpected function value attribute ${a.name}. Skipping it.`);
+                        continue;
+                    }
+                }
+                
+                inst.setAttribute(a.name, av);
+            }
+        }
     }
 
     // @LogGroup('Engine.filter')
@@ -281,6 +323,22 @@ export class Engine implements IEngine {
 
     protected queue = new Set<Context>;
 
+    onStateUpdate(bound: State.BoundElements) {
+        for (const ctx of bound.contexts) {
+            console.log(`Updating context`, ctx.id);
+            ctx.onUpdate();
+            // this.queue.add(ctx);
+            ctx.update && ctx.update();
+        }
+
+        for (const e of bound.elements) {
+            console.log(`Updating element`, lognode(e));
+            e._engine_.update();
+        }
+
+        console.log(`Queue ${bound.contexts.size} ctxs, now having ${this.queue.size}`);
+    }
+
     @LogGroup('Engine.render', n => lognode(n), {rich: true})
     async render(vinst: Element, ctx?:Context<Record<string, any>>) {
         this.onRenderStash = [];
@@ -293,13 +351,7 @@ export class Engine implements IEngine {
 
         ctx = ctx ? ctx.child(vinst, ctx.state, ctx.scope) : new Context();
         
-        ctx.state.hooks.set.push((bcs: Set<Context>) => {
-            for (let bc of bcs) {
-                bc.onUpdate();
-                this.queue.add(bc);
-            }
-            console.log(`Queue ${bcs.size} ctxs, now having ${this.queue.size}`);
-        });
+        ctx.state.hooks.set.push(this.onStateUpdate.bind(this));
 
         this.$.replace(vinst, await this.transform(vinst, ctx));
 

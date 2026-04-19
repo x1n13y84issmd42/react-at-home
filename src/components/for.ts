@@ -11,9 +11,7 @@ export interface Scope {
 };
 
 export async function stateFn(state: State) {
-	return {
-		of: state.of || [],
-	};
+	state.of = state.of || [];
 }
 
 export async function domFn(ctx: Context<State, Scope>, $: I$, engine: IEngine) {
@@ -31,7 +29,7 @@ export async function domFn(ctx: Context<State, Scope>, $: I$, engine: IEngine) 
 
 		res.push(...await $.map(
 			ctx.dom.vinst.childNodes,
-			(cn: Element) => engine.transform(cn, ctx),
+			(cn) => engine.transform(cn, ctx),
 			engine.filter
 		));
 

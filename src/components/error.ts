@@ -10,12 +10,17 @@ export interface State {
 export async function domFn(ctx: Context<State>, $: I$, engine: IEngine) {
 	if (ctx.state.error) {
 		const E = document.createElement('div');
-		E.style.backgroundColor = 'red';
+		E.style.backgroundColor = '#700';
 		E.style.color = 'white';
+		E.style.fontFamily = 'monospace';
+		E.style.fontSize = '10pt';
 
 		const p1 = document.createElement('p');
 		const p2 = document.createElement('p');
 		const p3 = document.createElement('p');
+
+		p3.style.fontWeight = 'bold';
+
 		p1.appendChild(document.createTextNode('Context: ' + ctx.state.ctxID + "\n"));
 		p2.appendChild(document.createTextNode('Node: ' + ctx.state.nodeName + "\n"));
 		p3.appendChild(document.createTextNode(ctx.state.error.message));

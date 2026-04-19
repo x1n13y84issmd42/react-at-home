@@ -6,9 +6,7 @@ export interface State {
 }
 
 export async function stateFn(state: State) {
-	return {
-		cond: !!state.cond
-	};
+	state.cond = !!state.cond;
 }
 
 export async function domFn(ctx: Context<State>, $: I$, engine: IEngine) {

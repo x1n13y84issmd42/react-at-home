@@ -98,7 +98,7 @@ export type Handlers = {[e in keyof HandlerFactories]?: ReturnType<HandlerFactor
  * @param fn A function to call in the handler.
  * @returns 
  */
-function handlerFactory<TE extends Event>(fn: Function) {
+function handlerFactory<TE extends Event>(fn: Function): EventListener {
 	return LogGroup.wrap(function (e?: TE) {
 		// if (e) {
 		// 	e.preventDefault();
@@ -106,6 +106,6 @@ function handlerFactory<TE extends Event>(fn: Function) {
 		// }
 
 		// console.dir(e);
-		return fn(e);
-	}, ' > event', e => e.type);
+		fn(e);
+	}, ' > event', e => e.type) as EventListener;
 }

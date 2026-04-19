@@ -10,7 +10,7 @@ interface IContextDOM {
 
 	// The actual DOM instance, in fact a copy of the component source.
 	//TODO: get rid of this, refactor everything to use only multiple nodes.
-	inst?: Element;
+	inst?: EngineElement;
 	
 	// The component source template DOM markup.
 	src?: Element;
@@ -29,6 +29,9 @@ interface IContextDOM {
 function logCtx (this: Context) {
 	return this.name;
 }
+
+export type AnyState = {[p: string]: any};
+export type AsyncFn = () => Promise<void>;
 
 export class Context<Tstate extends object = any, Tscope extends object = any> {
 	readonly state: State.WithHooks<Tstate> = State.create<Tstate>({} as any, this);
@@ -49,6 +52,8 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 
 	protected children: Map<string, Context> = new Map;
 
+	public update?: AsyncFn;
+
 	constructor(state?: Tstate, scope?: Tscope) {
 		LogGroup.wrap(() => {
 			this.merge(this.state, state);
@@ -58,8 +63,6 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 	
 	@LogGroup("Context.child()", logCtx, {collapsed: true})
 	child(vinst: Element, stateEx?: Tstate, scopeEx?: Tscope): Context<Tstate, Tscope> {
-		console.log(`Context#${this.name}`);
-		
 		const vinstTagName = vinst.tagName.toLowerCase();
 
 		let thatID = this.idgen.peek[vinstTagName];
@@ -82,7 +85,7 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 			console.log(`* Restored child Context#${that.id}.`);
 		}
 
-		return that;
+		return that as Context<Tstate, Tscope>;
 	}
 
 	@LogGroup("Context.merge()", logCtx, {collapsed: true})
@@ -103,9 +106,9 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 	}
 
 	@LogGroup("Context.own()", logCtx)
-	own(vinst: Element, inst?: Element, id?: string) {
+	own(vinst: Element, inst?: EngineElement, id?: string) {
 		const xvinst = vinst as EngineElement;
-		xvinst._engine_ = xvinst._engine_ || {};
+		xvinst._engine_ = xvinst._engine_ || {update: ()=>{}};
 
 		if (! this.dom.vinst) {
 			this._id = id || genid();
@@ -156,9 +159,5 @@ export class Context<Tstate extends object = any, Tscope extends object = any> {
 	get name(): string {
 		// return makeid([this.dom.vinst?.nodeName, this.id]);
 		return this.id;
-	}
-
-	cid(id: string) {
-		return makeid([this.id, id]);
 	}
 }

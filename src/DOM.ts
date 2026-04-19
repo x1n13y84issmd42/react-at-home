@@ -94,41 +94,7 @@ export class DOM implements I$ {
 	clone(e: Node, attrMap?: AttrMapFn) {
 		const cloneE = e.cloneNode() as Element;
 
-		if (attrMap && cloneE.attributes) {
-			const removeAttrs: Attr[] = [];
-
-			for (let a of cloneE.attributes) {
-				const av = attrMap(a.name, a.value);
-
-				if (! av) {
-					removeAttrs.push(a);
-					continue;
-				}
-
-				if (av instanceof Function) {
-					let match = a.name.match(/^on(.*)/i);
-					if (match) {
-						if (match[1] in handlers) {
-							cloneE.addEventListener(match[1], handlers[match[1] as keyof Handlers](av));
-						} else {
-							console.warn(`Unknown event handler ${a.name}.`);
-							cloneE.addEventListener(match[1], handlers.generic(av));
-						}
-						console.log(`+ evt "${match[1]}" handler`);
-					} else {
-						console.warn(`Unexpected function value attribute ${a.name}. Skipping it.`);
-					}
-					cloneE.removeAttribute(a.name);
-				} else {
-					a.value = av;
-				}
-			}
-
-			for (let a of removeAttrs) {
-				cloneE.removeAttribute(a.name);
-				console.warn(`- attribute "${a.name}"`);
-			}
-		}
+		
 
     	return cloneE;
 	}
