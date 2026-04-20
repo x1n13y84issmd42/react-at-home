@@ -99,13 +99,13 @@ export type Handlers = {[e in keyof HandlerFactories]?: ReturnType<HandlerFactor
  * @returns 
  */
 function handlerFactory<TE extends Event>(fn: Function) {
-	return LogGroup.wrap(function (e?: TE) {
+	return LogGroup.wrap(function (this: any, e?: TE|Event) {
 		// if (e) {
 		// 	e.preventDefault();
 		// 	e.stopPropagation();
 		// }
 
 		// console.dir(e);
-		return fn(e);
+		return fn.call(this, e);
 	}, ' > event', e => e.type);
 }
