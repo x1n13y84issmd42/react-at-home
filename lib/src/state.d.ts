@@ -1,4 +1,5 @@
 import { Context } from "./context";
+import { EngineElement } from "./contracts";
 export declare namespace State {
     type WithHooks<T> = T & {
         hooks: {
@@ -6,13 +7,19 @@ export declare namespace State {
             set: State.Hook;
         };
     };
+    class BoundElements {
+        elements: Set<EngineElement>;
+        contexts: Set<Context>;
+    }
     const create: <T extends object = any>(state?: T, ctx?: Context) => WithHooks<T>;
-    type HookHandler = (bound: Set<Context>, p?: any, v?: any) => void;
+    type HookHandler = (bound: BoundElements, p?: any, v?: any) => void;
     class Hook {
         handlers: Function[];
-        call(bound: Set<Context>, p?: any, v?: any): void;
+        call(bound: BoundElements, p?: any, v?: any): void;
         push(h: HookHandler): void;
         pop(): void;
         with(handler: HookHandler, fn: Function): any;
+        forElement(e: EngineElement, fn: Function): any;
+        forContext(ctx: Context, fn: Function): any;
     }
 }

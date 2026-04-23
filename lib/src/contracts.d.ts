@@ -9,12 +9,12 @@ export interface I$ {
     append(e: Node, children: Nodes, fn?: NodeMultiplexer): Promise<void>;
     map(nodes: Nodes, fn: NodeMultiplexer, filter?: NodeFilter): Promise<Nodes>;
 }
-export type StateFn<TS extends object = any> = (state: TS) => Promise<Partial<TS>>;
+export type StateFn<TS extends object = any> = (state: TS) => Promise<any>;
 export type DOMFn = (ctx: Context, $: I$, engine: IEngine) => Promise<Nodes | undefined>;
 export type OnRenderFn = (ctx: Context) => Promise<void>;
-export interface ResolvedComponent<TS extends object = {}> {
+export interface ResolvedComponent {
     src: Element;
-    stateFn?: StateFn<TS>;
+    stateFn?: StateFn;
     domFn?: DOMFn;
     onRenderFn?: OnRenderFn;
 }
@@ -25,7 +25,8 @@ export interface IEngine {
     filter(vinst: Node): boolean;
 }
 export interface EngineElement extends Element {
-    _engine_?: {
+    _engine_: {
         ctx?: Context;
+        update: Function;
     };
 }
