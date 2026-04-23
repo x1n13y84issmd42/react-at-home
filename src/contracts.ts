@@ -11,7 +11,7 @@ export interface I$ {
 	map(nodes: Nodes, fn: NodeMultiplexer, filter?: NodeFilter): Promise<Nodes>;
 }
 
-export type StateFn = (st: any)=>Promise<void>;
+export type StateFn<TS extends object = any> = (state: TS)=>Promise<any>;
 export type DOMFn = (ctx: Context, $: I$, engine: IEngine)=>Promise<Nodes | undefined>;
 export type OnRenderFn = (ctx: Context)=>Promise<void>;
 

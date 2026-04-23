@@ -29,7 +29,7 @@ export async function domFn(ctx: Context<State, Scope>, $: I$, engine: IEngine) 
 
 		res.push(...await $.map(
 			ctx.dom.vinst.childNodes,
-			(cn) => engine.transform(cn, ctx),
+			cn => engine.transform(cn, ctx),
 			engine.filter
 		));
 
