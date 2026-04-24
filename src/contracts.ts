@@ -14,12 +14,17 @@ export interface I$ {
 export type StateFn<TS extends object = any> = (state: TS)=>Promise<any>;
 export type DOMFn = (ctx: Context, $: I$, engine: IEngine)=>Promise<Nodes | undefined>;
 export type OnRenderFn = (ctx: Context)=>Promise<void>;
+export type NeedsDOMUpdateFn = (ctx: Context)=>()=>boolean;
 
-export interface ResolvedComponent {
+export type RegisteredComponent = {
+    stateFn?: StateFn;
+    domFn?: DOMFn;
+    onRenderFn?: OnRenderFn;
+    needsDOMUpdateFn?: NeedsDOMUpdateFn;
+};
+
+export interface ResolvedComponent extends RegisteredComponent {
 	src: Element;
-	stateFn?: StateFn;
-	domFn?: DOMFn;
-	onRenderFn?: OnRenderFn;
 }
 
 export type NodeMultiplexer = (n: Node) => Promise<Nodes>;

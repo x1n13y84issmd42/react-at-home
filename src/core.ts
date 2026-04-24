@@ -1,5 +1,5 @@
 import { Context } from './context';
-import { DOMFn, EngineElement, IEngine, Nodes, OnRenderFn, ResolvedComponent, StateFn } from './contracts';
+import { DOMFn, EngineElement, IEngine, NeedsDOMUpdateFn, Nodes, OnRenderFn, RegisteredComponent, ResolvedComponent, StateFn } from './contracts';
 import { computer } from './data';
 import * as datafn from './datafn';
 import { DOM } from './DOM';
@@ -9,11 +9,7 @@ import { Handlers, handlers } from "./handlers";
 import { State } from './state';
 
 
-type RegisteredComponent = {
-    stateFn?: StateFn;
-    domFn?: DOMFn;
-    onRenderFn?: OnRenderFn;
-};
+
 
 export class Engine implements IEngine {
     protected registry: Record<string, RegisteredComponent> = {};
@@ -36,11 +32,12 @@ export class Engine implements IEngine {
         }
     }
 
-    register(compName: string, stateFn?: StateFn, domFn?: DOMFn, onRenderFn?: OnRenderFn) {
+    register(compName: string, stateFn?: StateFn, domFn?: DOMFn, onRenderFn?: OnRenderFn, needsDOMUpdateFn?: NeedsDOMUpdateFn) {
         this.registry[compName.toLowerCase()] = {
             stateFn,
             domFn,
             onRenderFn,
+            needsDOMUpdateFn,
         };
     }
 
@@ -66,6 +63,7 @@ export class Engine implements IEngine {
         }
 
         if (! instCtx) {
+            console.log(`New CTX`);
             instCtx = parentCtx.child(vinst);
             instCtx.reset();
         }
@@ -91,12 +89,13 @@ export class Engine implements IEngine {
             instCtx.mergeState(instState);
         };
 
-        parentCtx.state.hooks.get.forContext(instCtx, () => {
-            instCtx.update && instCtx.update();    
+        parentCtx.state.hooks.get.forContext(instCtx, async () => {
+            console.log(`ctx.update() 1`);
+            instCtx.update && await instCtx.update();    
         });
 
 
-        const nodes = await this.create(vinst.nodeName, instCtx, comp);
+        const nodes = await this.create(vinst.nodeName, instCtx);
         console.log(`Rendered.`, instCtx.dom.nodes);
         instCtx.onRender();
         return nodes;
@@ -115,7 +114,8 @@ export class Engine implements IEngine {
 
                 const prevUpdate = ctx.update || (async () => {});
                 ctx.update = async () => {
-                    prevUpdate();
+                    console.log(`ctx.update() 2`);
+                    await prevUpdate();
                     await stateFn(ctx.state);
                 };
             }
@@ -131,16 +131,35 @@ export class Engine implements IEngine {
             }
 
             if (comp.domFn) {
-                const domFn = LogGroup.wrap(comp.domFn, 'domFn()');
-                ctx.dom.nodes.push(...(await domFn(ctx, this.$, this)||[]));
-                console.log(`After domFn(): ${ctx.dom.nodes.length} child nodes`);
+                const _domFn = async () => {
+                    console.log(`Running _domFn()`);
+                    const domFn = LogGroup.wrap(comp.domFn!, 'domFn()');
+                    ctx.dom.nodes.push(...(await domFn(ctx, this.$, this)||[]));
+                    console.log(`After domFn(): ${ctx.dom.nodes.length} child nodes`);
+    
+                    if (! ctx.dom.nodes.length) {
+                        // This serves as a placeholder for unrendered nodes (like <if cond=false>)
+                        // to allow replacement later when the node is rendered.
+                        ctx.dom.nodes = [this.$.createPlaceholder(ctx.id)];
+                        console.log(`Created a placeholder node.`);
+                        created = false;
+                    }
+                };
 
-                if (! ctx.dom.nodes.length) {
-                    // This serves as a placeholder for unrendered nodes (like <if cond=false>)
-                    // to allow replacement later when the node is rendered.
-                    ctx.dom.nodes = [this.$.createPlaceholder(ctx.id)];
-                    created = false;
-                }
+                await _domFn();
+
+                const prevUpdate = ctx.update || (async () => {});
+                const needsUpdate = comp.needsDOMUpdateFn ? comp.needsDOMUpdateFn(ctx) : (() => true);
+                ctx.update = async () => {
+                    console.log(`(${ctx.id}).update() 3`);
+                    await prevUpdate();
+
+                    if (needsUpdate()) {
+                        const oldNodes = [...ctx.dom.nodes];
+                        await _domFn();
+                        this.$.replace2(oldNodes, ctx.dom.nodes);
+                    }
+                };
             }
 
             if (created && comp.onRenderFn) {
@@ -181,16 +200,22 @@ export class Engine implements IEngine {
             update: () => this.compute(inst, vinst as Element, ctx),
         };
 
+        console.log(`Set inst._engine_`, inst._engine_);
+        
         return await ctx.state.hooks.get.forElement(inst, async () => {
+            console.log(`Running inst._engine_.update()...`);
             inst._engine_.update();
-
+            console.log(`Done inst._engine_.update()`);
+            
             if (inst.nodeType !== Node.TEXT_NODE) {
                 const instID = inst.getAttribute('id');
                 if (instID) {
                     ctx.dom.id[instID] = inst;
+                    console.log(`Set node ID as`, instID);
                 }
-    
+                
                 if (vinst.childNodes.length) {
+                    console.log(`Appending children...`);
                     await this.$.append(
                         inst,
                         vinst.childNodes,
@@ -322,21 +347,26 @@ export class Engine implements IEngine {
     }
 
     protected queue = new Set<Context>;
+    protected queue2:Function[] = [];
 
     onStateUpdate(bound: State.BoundElements) {
         for (const ctx of bound.contexts) {
             console.log(`Updating context`, ctx.id);
             ctx.onUpdate();
             // this.queue.add(ctx);
-            ctx.update && ctx.update();
+            // ctx.update && ctx.update();
+            ctx.update && this.queue2.push(ctx.update);
         }
-
+        
+        console.log(`Queue ${bound.contexts.size} ctxs, now having ${this.queue2.length} updates.`);
+        
         for (const e of bound.elements) {
             console.log(`Updating element`, lognode(e));
-            e._engine_.update();
+            e._engine_.update && this.queue2.push(e._engine_.update);
+            // e._engine_.update();
         }
-
-        console.log(`Queue ${bound.contexts.size} ctxs, now having ${this.queue.size}`);
+        
+        console.log(`Queue ${bound.elements.size} elements, now having ${this.queue2.length} updates.`);
     }
 
     @LogGroup('Engine.render', n => lognode(n), {rich: true})
@@ -358,10 +388,11 @@ export class Engine implements IEngine {
         this.onRender();
         
         const update = async () => {
+            console.log(`Update routine.`);
             this.onRenderStash = [];
             const rafr = () => requestAnimationFrame(update);
 
-            if (this.queue.size < 1) return rafr();
+            if (this.queue2.length < 1) return rafr();
 
             if (updating) return rafr();
 
@@ -370,14 +401,14 @@ export class Engine implements IEngine {
                 
                 const t0 = Date.now();
                 try {
-                    const q = [...this.queue];
-                    this.queue.clear();
-                    console.log(`Having ${q.length} contexts to update...`);
-                    for (let c of q) {
-                        await this.update(c);
+                    const q = [...this.queue2];
+                    this.queue2 = [];
+                    console.log(`Having ${q.length} updates...`);
+                    for (let update of q) {
+                        await update();
                     }
                     this.onRender();
-                    console.log(`Done updating contexts.`);
+                    console.log(`Done updating.`);
                     console_log(`Took ${Date.now()-t0} ms.`);
                 } catch(err) {
                     console.error(err);

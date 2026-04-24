@@ -21,7 +21,7 @@ export namespace State {
 
 		//TODO: this proxy usage needs to be revised both design- & performance-wise.
 		function get(o: T, p: Keys<T> | 'hooks'): any {
-			ctx && console.log(`(Context#${ctx.name}).${p}`);
+			ctx && console.log(`State.get (Context#${ctx.name}).${p}`);
 
 			if (p === 'hooks') {
 				return hooks;
@@ -35,7 +35,7 @@ export namespace State {
 		}
 	
 		function set(o: T, p: Keys<T>, v: T[Keys<T>]): boolean {
-			ctx && console.log(`(Context#${ctx.name}).${p} = ${v}`);
+			ctx && console.log(`State.set (Context#${ctx.name}).${p} = ${v}`);
 
 			o[p] = v;
 			stash[p] = stash[p] || new BoundElements();
@@ -99,12 +99,18 @@ export namespace State {
 		}
 
 		forElement(e: EngineElement, fn: Function) {
-			const handler = (bound: BoundElements) => bound.elements.add(e);
+			const handler = (bound: BoundElements) => {
+				console.log(`Bounded the element`, e);
+				bound.elements.add(e)
+			};
 			return this.with(handler, fn);
 		}
-
+		
 		forContext(ctx: Context, fn: Function) {
-			const handler = (bound: BoundElements) => bound.contexts.add(ctx);
+			const handler = (bound: BoundElements) => {
+				console.log(`Bounded the Context`, ctx);
+				bound.contexts.add(ctx);
+			};
 			return this.with(handler, fn);
 		}
 	}

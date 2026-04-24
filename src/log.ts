@@ -74,7 +74,7 @@ export namespace LogGroup {
 				console.groupEnd();
 			}
 			
-			// console.log('//' + groupName);
+			console.log('//' + groupName);
 			console.groupEnd();
 		}
 

@@ -92,11 +92,7 @@ export class DOM implements I$ {
 
 	@LogGroup('$.clone', e => lognode(e), {collapsed: true})
 	clone(e: Node, attrMap?: AttrMapFn) {
-		const cloneE = e.cloneNode() as Element;
-
-		
-
-    	return cloneE;
+		return e.cloneNode() as Element;
 	}
 
 	@LogGroup('$.append', (e, c, fn) => [lognode(e), '<', c.length, fn ? '+' : '-'])
