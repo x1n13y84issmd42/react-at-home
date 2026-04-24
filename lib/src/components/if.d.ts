@@ -5,3 +5,4 @@ export interface State {
 }
 export declare function stateFn(state: State): Promise<void>;
 export declare function domFn(ctx: Context<State>, $: I$, engine: IEngine): Promise<import("..").Nodes | undefined>;
+export declare function needsDOMUpdate(ctx: Context<State>): () => boolean;
